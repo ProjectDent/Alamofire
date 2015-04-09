@@ -79,7 +79,7 @@ public enum ParameterEncoding {
             return (URLRequest.URLRequest, nil)
         }
 
-        var mutableURLRequest: NSMutableURLRequest! = URLRequest.URLRequest.mutableCopy() as NSMutableURLRequest
+        var mutableURLRequest: NSMutableURLRequest! = URLRequest.URLRequest.mutableCopy() as! NSMutableURLRequest
         var error: NSError? = nil
 
         switch self {
@@ -187,7 +187,7 @@ extension NSURLComponents: URLStringConvertible {
 
 extension NSURLRequest: URLStringConvertible {
     public var URLString: String {
-        return URL.URLString
+        return URL!.URLString
     }
 }
 
@@ -247,7 +247,7 @@ public class Manager {
         // Accept-Language HTTP Header; see http://tools.ietf.org/html/rfc7231#section-5.3.5
         let acceptLanguage: String = {
             var components: [String] = []
-            for (index, languageCode) in enumerate(NSLocale.preferredLanguages() as [String]) {
+            for (index, languageCode) in enumerate(NSLocale.preferredLanguages() as! [String]) {
                 let q = 1.0 - (Double(index) * 0.1)
                 components.append("\(languageCode);q=\(q)")
                 if q <= 0.5 {
@@ -269,7 +269,7 @@ public class Manager {
                 var mutableUserAgent = NSMutableString(string: "\(executable)/\(bundle) (\(version); OS \(os))") as CFMutableString
                 let transform = NSString(string: "Any-Latin; Latin-ASCII; [:^ASCII:] Remove") as CFString
                 if CFStringTransform(mutableUserAgent, nil, transform, 0) == 1 {
-                    return mutableUserAgent as NSString
+                    return mutableUserAgent as NSString as String
                 }
             }
             return "Alamofire"
@@ -778,7 +778,7 @@ public class Request {
     }
 
     class DataTaskDelegate: TaskDelegate, NSURLSessionDataDelegate {
-        var dataTask: NSURLSessionDataTask! { return task as NSURLSessionDataTask }
+        var dataTask: NSURLSessionDataTask! { return task as! NSURLSessionDataTask }
 
         private var mutableData: NSMutableData
         override var data: NSData? {
@@ -1112,7 +1112,7 @@ extension Manager {
 
 extension Request {
     class UploadTaskDelegate: DataTaskDelegate {
-        var uploadTask: NSURLSessionUploadTask! { return task as NSURLSessionUploadTask }
+        var uploadTask: NSURLSessionUploadTask! { return task as! NSURLSessionUploadTask }
         var uploadProgress: ((Int64, Int64, Int64) -> Void)!
 
         // MARK: NSURLSessionTaskDelegate
@@ -1147,7 +1147,7 @@ extension Manager {
         let request = Request(session: session, task: downloadTask)
         if let downloadDelegate = request.delegate as? Request.DownloadTaskDelegate {
             downloadDelegate.downloadTaskDidFinishDownloadingToURL = { (session, downloadTask, URL) in
-                return destination(URL, downloadTask.response as NSHTTPURLResponse)
+                return destination(URL, downloadTask.response as! NSHTTPURLResponse)
             }
         }
         delegate[request.delegate.task] = request.delegate
@@ -1231,7 +1231,7 @@ extension Request {
     }
 
     class DownloadTaskDelegate: TaskDelegate, NSURLSessionDownloadDelegate {
-        var downloadTask: NSURLSessionDownloadTask! { return task as NSURLSessionDownloadTask }
+        var downloadTask: NSURLSessionDownloadTask! { return task as! NSURLSessionDownloadTask }
         var downloadProgress: ((Int64, Int64, Int64) -> Void)?
 
         var resumeData: NSData?
@@ -1283,7 +1283,7 @@ extension Request: Printable {
             components.append(request.HTTPMethod!)
         }
 
-        components.append(request.URL.absoluteString!)
+        components.append(request.URL!.absoluteString!)
 
         if response != nil {
             components.append("(\(response!.statusCode))")
@@ -1304,7 +1304,7 @@ extension Request: DebugPrintable {
         }
 
         if let credentialStorage = self.session.configuration.URLCredentialStorage {
-            let protectionSpace = NSURLProtectionSpace(host: URL.host!, port: URL.port?.integerValue ?? 0, `protocol`: URL.scheme!, realm: URL.host!, authenticationMethod: NSURLAuthenticationMethodHTTPBasic)
+            let protectionSpace = NSURLProtectionSpace(host: URL!.host!, port: URL!.port?.integerValue ?? 0, `protocol`: URL!.scheme!, realm: URL!.host!, authenticationMethod: NSURLAuthenticationMethodHTTPBasic)
             if let credentials = credentialStorage.credentialsForProtectionSpace(protectionSpace)?.values.array {
                 for credential: NSURLCredential in (credentials as [NSURLCredential]) {
                     components.append("-u \(credential.user!):\(credential.password!)")
@@ -1320,7 +1320,7 @@ extension Request: DebugPrintable {
         // See https://github.com/CocoaPods/swift/issues/24
         #if !os(OSX)
         if let cookieStorage = session.configuration.HTTPCookieStorage {
-            if let cookies = cookieStorage.cookiesForURL(URL) as? [NSHTTPCookie] {
+            if let cookies = cookieStorage.cookiesForURL(URL!) as? [NSHTTPCookie] {
                 if !cookies.isEmpty {
                     let string = cookies.reduce(""){ $0 + "\($1.name)=\($1.value ?? String());" }
                     components.append("-b \"\(string.substringToIndex(string.endIndex.predecessor()))\"")
@@ -1357,7 +1357,7 @@ extension Request: DebugPrintable {
             }
         }
 
-        components.append("\"\(URL.absoluteString!)\"")
+        components.append("\"\(URL!.absoluteString!)\"")
 
         return join(" \\\n\t", components)
     }
